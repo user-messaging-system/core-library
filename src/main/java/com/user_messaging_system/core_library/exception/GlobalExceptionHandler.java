@@ -39,11 +39,4 @@ public class GlobalExceptionHandler extends RuntimeException{
         new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), request.getDescription(false));
         return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException ex, WebRequest request){
-        ErrorResponse errorResponse = 
-        new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.UNAUTHORIZED.value(), request.getDescription(false));
-        return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.UNAUTHORIZED);
-    }
 }
