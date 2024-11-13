@@ -1,12 +1,12 @@
 package com.user_messaging_system.core_library.service;
 
 import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.user_messaging_system.core_library.exception.UnauthorizedException;
 import io.jsonwebtoken.*;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -21,15 +21,15 @@ public class JWTService {
         return Jwts.builder()
                 .subject(email)
                 .claim("userId", id)
+                .claim("roles", roles)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 5 * 24 * 60 * 60 * 1000))
                 .signWith(getSignInKey())
                 .compact();
     }
 
-    public void validateToken(String jwtToken) {
+    public void validateToken(String token) {
         try {
-            String token = jwtToken.substring(7);
             validateTokenExpired(token);
             Jwts.parser()
                     .verifyWith(getSignInKey())
@@ -43,22 +43,26 @@ public class JWTService {
         }
     }
 
-    public String extractToken(String jwtToken){
-        return jwtToken.substring(7);
-    }
-
     public String extractEmail(String token) {
-        Claims claims = extractAllClaims(extractToken(token));
+        Claims claims = extractAllClaims(token);
         return claims.getSubject();
     }
 
     public String extractUserId(String token){
-        Claims claims = extractAllClaims(extractToken(token));
+        Claims claims = extractAllClaims(token);
         return String.valueOf(claims.get("userId"));
     }
 
     public Collection<GrantedAuthority> extractRoles(String token) {
         return extractClaim(token, this::extractRolesFromClaims);
+    }
+
+    public String extractToken(String token) {
+        if(Objects.nonNull(token) && token.startsWith("Bearer ")){
+            return token.substring(7);
+        }
+
+        throw new UnauthorizedException("Authorization header is missing or invalid");
     }
 
     private List<GrantedAuthority> extractRolesFromClaims(Claims claims) {
@@ -74,14 +78,6 @@ public class JWTService {
         return authorities;
     }
 
-    public String extractToken(ServerHttpRequest request) {
-        String authorizationHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            return authorizationHeader.substring(7);
-        }
-        throw new JWTVerificationException("Authorization header is missing or invalid");
-    }
-
     private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
@@ -95,14 +91,14 @@ public class JWTService {
                 .getPayload();
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
-    }
-
     private void validateTokenExpired(String token) {
         if (extractExpiration(token).before(new Date())) {
-            throw new JWTVerificationException("Token süresi doldu");
+            throw new JWTVerificationException("Token is expired");
         }
+    }
+
+    private Date extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration);
     }
 
     private SecretKey getSignInKey() {
