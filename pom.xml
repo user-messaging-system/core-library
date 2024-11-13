@@ -15,7 +15,7 @@
 
 	<groupId>com.user-messaging-system</groupId>
 	<artifactId>core-library</artifactId>
-	<version>1.0.2-SNAPSHOT</version>
+	<version>1.0.4-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<name>core-library</name>
 	<description>Core library</description>
@@ -62,7 +62,6 @@
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 			<scope>provided</scope>
 		</dependency>
-
 		<!-- Test bağımlılıkları -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -75,15 +74,24 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-core</artifactId>
 		</dependency>
 		<dependency>
-			<groupId>org.springframework</groupId>
-			<artifactId>spring-tx</artifactId>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-core</artifactId>
+			<version>6.3.3</version>
 		</dependency>
-	</dependencies>
-
+    </dependencies>
 	<build>
 		<plugins>
 			<!-- Maven Compiler Plugin ekleniyor -->
