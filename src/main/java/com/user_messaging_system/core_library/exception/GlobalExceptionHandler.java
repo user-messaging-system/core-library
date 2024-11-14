@@ -11,32 +11,49 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends RuntimeException{
-    
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request){
-        ErrorResponse errorResponse = 
-        new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.BAD_REQUEST.value(), request.getDescription(false));
-        return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(
+            MethodArgumentNotValidException exception,
+            WebRequest request
+    ){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            .body(new ErrorResponse.Builder()
+                .message(exception.getMessage())
+                .error(exception.getCause().getMessage())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .path(request.getDescription(false))
+                .build()
+            );
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request){
-        ErrorResponse errorResponse = 
-        new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.NOT_FOUND.value(), request.getDescription(false));
-        return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+            ResourceNotFoundException exception,
+            WebRequest request
+    ){
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            .body(new ErrorResponse.Builder()
+                .message(exception.getMessage())
+                .error(exception.getCause().getMessage())
+                .status(HttpStatus.NOT_FOUND.value())
+                .path(request.getDescription(false))
+                .build()
+            );
     }
 
     @ExceptionHandler({DataIntegrityViolationException.class, DublicateResourceException.class})
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request){
-        ErrorResponse errorResponse = 
-        new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.CONFLICT.value(), request.getDescription(false));
-        return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleException(Exception ex, WebRequest request){
-        ErrorResponse errorResponse = 
-        new ErrorResponse(ex.getMessage(), ex.getCause().getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), request.getDescription(false));
-        return new ResponseEntity<ErrorResponse>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
+            DataIntegrityViolationException exception,
+            WebRequest request
+    ){
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+            .body(new ErrorResponse.Builder()
+                .message(exception.getMessage())
+                .error(exception.getCause().getMessage())
+                .status(HttpStatus.CONFLICT.value())
+                .path(request.getDescription(false))
+                .build()
+            );
     }
 }
