@@ -1,5 +1,8 @@
 package com.user_messaging_system.core_library.response;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -10,12 +13,20 @@ public class ErrorResponse {
     private final String path;
     private final String timestamp;
 
-    private ErrorResponse(Builder builder) {
-        this.message = builder.message;
-        this.error = builder.error;
-        this.status = builder.status;
-        this.path = builder.path;
-        this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+    @JsonCreator
+    public ErrorResponse(
+            @JsonProperty("message") String message,
+            @JsonProperty("error") String error,
+            @JsonProperty("status") int status,
+            @JsonProperty("path") String path,
+            @JsonProperty("timestamp") String timestamp) {
+        this.message = message;
+        this.error = error;
+        this.status = status;
+        this.path = path;
+        this.timestamp = timestamp != null
+                ? timestamp
+                : LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     }
 
     public String getMessage() {
@@ -69,6 +80,14 @@ public class ErrorResponse {
         public ErrorResponse build() {
             return new ErrorResponse(this);
         }
+    }
+
+    private ErrorResponse(Builder builder) {
+        this.message = builder.message;
+        this.error = builder.error;
+        this.status = builder.status;
+        this.path = builder.path;
+        this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
     }
 }
 
