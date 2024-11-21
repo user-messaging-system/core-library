@@ -1,15 +1,11 @@
 package com.user_messaging_system.core_library.service;
 
-
-import com.auth0.jwt.exceptions.JWTVerificationException;
-import com.user_messaging_system.core_library.exception.UnauthorizedException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
+import io.jsonwebtoken.security.SecurityException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.*;
@@ -17,49 +13,39 @@ import java.util.function.Function;
 
 @Component
 public class JWTService {
-    private static final Logger logger = LoggerFactory.getLogger(JWTService.class);
     private static final String SECRET_KEY = "05548d6d1cbd0d0f1c43332823ed32943dac7db78257fd7529c627e7e1e6e807";
-    private static final SecretKey SIGNING_KEY = getSignInKey();
+    private static final SecretKey SIGNING_KEY = getSigningKey();
 
     public String generateJwtToken(String email, String id, List<String> roles) {
         Date now = new Date();
         Date expiration = new Date(now.getTime() + 5 * 24 * 60 * 60 * 1000L); // 5 days
 
-        String token = Jwts.builder()
-            .setSubject(email)
-            .claim("userId", id)
-            .claim("roles", roles)
-            .setIssuedAt(now)
-            .setExpiration(expiration)
-            .signWith(SIGNING_KEY, SignatureAlgorithm.HS256)
-            .compact();
-
-        logger.info("Generated JWT token for user ID: {}", id);
-        return token;
+        return Jwts.builder()
+                .subject(email)
+                .claim("userId", id)
+                .claim("roles", roles)
+                .issuedAt(now)
+                .expiration(expiration)
+                .signWith(SIGNING_KEY)
+                .compact();
     }
 
     public void validateToken(String token) {
         try {
             Jwts.parser()
-                .setSigningKey(SIGNING_KEY)
-                .build()
-                .parseClaimsJws(token);
-            logger.info("Token validated successfully.");
+                    .verifyWith(SIGNING_KEY)
+                    .build()
+                    .parseSignedClaims(token);
         } catch (ExpiredJwtException e) {
-            logger.error("Token is expired: {}", e.getMessage());
-            throw new JWTVerificationException("Token is expired.", e);
+            throw new JwtException("Token validation failed - Token is expired.", e);
         } catch (UnsupportedJwtException e) {
-            logger.error("Unsupported JWT token: {}", e.getMessage());
-            throw new JWTVerificationException("Unsupported JWT token.", e);
+            throw new JwtException("Token validation failed - Unsupported JWT token.", e);
         } catch (MalformedJwtException e) {
-            logger.error("Malformed JWT token: {}", e.getMessage());
-            throw new JWTVerificationException("Malformed JWT token.", e);
-        } catch (SignatureException e) {
-            logger.error("Invalid JWT signature: {}", e.getMessage());
-            throw new JWTVerificationException("Invalid JWT signature.", e);
+            throw new JwtException("Token validation failed - Malformed JWT token.", e);
+        } catch (SecurityException e) {
+            throw new JwtException("Token validation failed - Invalid JWT signature.", e);
         } catch (IllegalArgumentException e) {
-            logger.error("JWT token compact of handler are invalid: {}", e.getMessage());
-            throw new JWTVerificationException("JWT token is invalid.", e);
+            throw new JwtException("Token validation failed - JWT token is invalid.", e);
         }
     }
 
@@ -75,29 +61,15 @@ public class JWTService {
         return extractClaim(token, this::extractRolesFromClaims);
     }
 
-    public String extractToken(String bearerToken) {
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            String token = bearerToken.substring(7);
-            logger.debug("Extracted token: {}", token);
-            return token;
-        }
-        logger.error("Authorization header is missing or does not start with Bearer.");
-        throw new UnauthorizedException("Authorization header is missing or invalid");
-    }
-
     private List<GrantedAuthority> extractRolesFromClaims(Claims claims) {
         List<GrantedAuthority> authorities = new ArrayList<>();
         Object rolesObject = claims.get("roles");
         if (rolesObject instanceof List<?>) {
             for (Object role : (List<?>) rolesObject) {
                 if (role instanceof String) {
-                    authorities.add(new SimpleGrantedAuthority((String) role));
-                } else {
-                    logger.warn("Role is not a String: {}", role);
+                    authorities.add(new SimpleGrantedAuthority(String.valueOf(role)));
                 }
             }
-        } else {
-            logger.warn("Roles claim is not a list: {}", rolesObject);
         }
         return authorities;
     }
@@ -109,65 +81,37 @@ public class JWTService {
 
     private Claims extractAllClaims(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
-                .setSigningKey(SIGNING_KEY)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-            logger.debug("Extracted claims: {}", claims);
-            return claims;
-        } catch (ExpiredJwtException e) {
-            logger.error("Failed to extract claims - Token is expired: {}", e.getMessage());
-            throw new JWTVerificationException("Token is expired.", e);
-        } catch (UnsupportedJwtException e) {
-            logger.error("Failed to extract claims - Unsupported JWT: {}", e.getMessage());
-            throw new JWTVerificationException("Unsupported JWT token.", e);
-        } catch (MalformedJwtException e) {
-            logger.error("Failed to extract claims - Malformed JWT: {}", e.getMessage());
-            throw new JWTVerificationException("Malformed JWT token.", e);
-        } catch (SignatureException e) {
-            logger.error("Failed to extract claims - Invalid signature: {}", e.getMessage());
-            throw new JWTVerificationException("Invalid JWT signature.", e);
-        } catch (IllegalArgumentException e) {
-            logger.error("Failed to extract claims - Token is null or empty: {}", e.getMessage());
-            throw new JWTVerificationException("JWT token is invalid.", e);
+            return Jwts.parser()
+                    .verifyWith(SIGNING_KEY)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+        } catch (JwtException e) {
+            throw new JwtException("Failed to extract claims from token.", e);
         }
     }
 
-    private void validateTokenIsExpired(String token) {
-        Date expiration = extractExpiration(token);
-        if (expiration.before(new Date())) {
-            throw new JWTVerificationException("Token is expired");
+    public String extractToken(String bearerToken) {
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
         }
+        throw new IllegalArgumentException("Invalid Bearer token format");
     }
 
-    private Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    private static SecretKey getSigningKey() {
+        byte[] keyBytes = hexStringToByteArray(SECRET_KEY);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private static SecretKey getSignInKey() {
-        try {
-            byte[] keyBytes = hexStringToByteArray(SECRET_KEY);
-            return Keys.hmacShaKeyFor(keyBytes);
-        } catch (Exception e) {
-            logger.error("Failed to generate signing key: {}", e.getMessage());
-            throw new IllegalStateException("Cannot generate signing key", e);
-        }
-    }
-
-    private static byte[] hexStringToByteArray(String s) {
-        int len = s.length();
+    private static byte[] hexStringToByteArray(String hex) {
+        int len = hex.length();
         if (len % 2 != 0) {
-            throw new IllegalArgumentException("Invalid SECRET_KEY length.");
+            throw new IllegalArgumentException("Hex string length must be even");
         }
         byte[] data = new byte[len / 2];
         for (int i = 0; i < len; i += 2) {
-            int firstDigit = Character.digit(s.charAt(i), 16);
-            int secondDigit = Character.digit(s.charAt(i + 1), 16);
-            if (firstDigit == -1 || secondDigit == -1) {
-                throw new IllegalArgumentException("Invalid hex character in SECRET_KEY.");
-            }
-            data[i / 2] = (byte) ((firstDigit << 4) + secondDigit);
+            data[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    + Character.digit(hex.charAt(i + 1), 16));
         }
         return data;
     }
