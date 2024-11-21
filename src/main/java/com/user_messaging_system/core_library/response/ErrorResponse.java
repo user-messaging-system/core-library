@@ -45,6 +45,17 @@ public class ErrorResponse {
         return path;
     }
 
+    @Override
+    public String toString() {
+        return "ErrorResponse{" +
+                "message='" + message + '\'' +
+                ", error='" + error + '\'' +
+                ", status=" + status +
+                ", path='" + path + '\'' +
+                ", timestamp='" + timestamp + '\'' +
+                '}';
+    }
+
     public String getTimestamp() {
         return timestamp;
     }
