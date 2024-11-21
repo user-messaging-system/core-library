@@ -1,5 +1,6 @@
 package com.user_messaging_system.core_library.exception;
 
+import io.jsonwebtoken.JwtException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -55,5 +56,16 @@ public class GlobalExceptionHandler extends RuntimeException{
                 .path(request.getDescription(false))
                 .build()
             );
+    }
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<ErrorResponse> handleJwtException(JwtException exception, WebRequest request){
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            .body(new ErrorResponse.Builder()
+                    .message(exception.getMessage())
+                    .error(exception.getCause() != null ? exception.getCause().getMessage() : null)
+                    .status(HttpStatus.UNAUTHORIZED.value())
+                    .path(request.getDescription(false))
+                    .build());
     }
 }
