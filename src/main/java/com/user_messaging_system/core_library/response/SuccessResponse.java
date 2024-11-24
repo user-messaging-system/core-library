@@ -9,14 +9,15 @@ public class SuccessResponse<T> {
     private T data;
     private String status;
 
-    public SuccessResponse() {
+    public SuccessResponse(){
+
     }
 
-    public SuccessResponse(String message, T data, String status) {
+    private SuccessResponse(Builder<T> builder) {
         this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
-        this.message = message;
-        this.data = data;
-        this.status = status;
+        this.message = builder.message;
+        this.data = builder.data;
+        this.status = builder.status;
     }
 
     public String getMessage() {
@@ -49,5 +50,40 @@ public class SuccessResponse<T> {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public static class Builder<T>{
+        private String message;
+        private String timestamp;
+        private T data;
+        private String status;
+
+        public Builder(){
+            this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
+        }
+
+        public Builder<T> message(String message){
+            this.message = message;
+            return this;
+        }
+
+        public Builder<T> timestamp(String timestamp){
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Builder<T> data(T data){
+            this.data = data;
+            return this;
+        }
+
+        public Builder<T> status(String status){
+            this.status = status;
+            return this;
+        }
+
+        public SuccessResponse<T> build(){
+            return new SuccessResponse<>(this);
+        }
     }
 }
