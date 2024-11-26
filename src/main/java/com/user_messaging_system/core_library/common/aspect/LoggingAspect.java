@@ -2,10 +2,13 @@ package com.user_messaging_system.core_library.common.aspect;
 
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.*;
+import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 @Aspect
 public class LoggingAspect {
@@ -16,9 +19,20 @@ public class LoggingAspect {
 
     @Before("logExecutionPointcut()")
     public void logBefore(JoinPoint joinPoint) {
-        String methodName = joinPoint.getSignature().getName();
+        String className = joinPoint.getTarget().getClass().getSimpleName();
+        String methodName = getCurrentMethod(joinPoint).getName();
         Object[] args = joinPoint.getArgs();
-        logger.info("[START] Method {} called with parameters: {}", methodName, Arrays.toString(args));
+
+        String params = Arrays.stream(args)
+                          .map(arg -> arg != null ? arg.toString() : "null")
+                          .collect(Collectors.joining(", "));
+
+       logger.info(
+               "[START] [{}] [{}] - Method called with parameters: [{}]",
+               className,
+               methodName,
+               params
+       );
     }
 
     @AfterReturning(value = "logExecutionPointcut()", returning = "result")
@@ -31,5 +45,10 @@ public class LoggingAspect {
     public void logAfterThrowing(JoinPoint joinPoint, Throwable exception) {
         String methodName = joinPoint.getSignature().getName();
         logger.error("[ERROR] Method {} encountered an exception. Message: {}", methodName, exception.getMessage());
+    }
+
+    private Method getCurrentMethod(JoinPoint joinPoint){
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        return signature.getMethod();
     }
 }
