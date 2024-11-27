@@ -20,19 +20,19 @@ public final class APIConstant {
      * Base URL for the Message Service.
      * Example: /message-service/v1/api/messages
      */
-    public static final String MESSAGE_SERVICE_BASE_URL = "/message-service/v1/api/messages";
+    public static final String MESSAGE_SERVICE_BASE_URL = "/v1/api/messages";
 
     /**
      * Base URL for the Authentication Service.
      * Example: /auth-service/v1/api/auth
      */
-    public static final String AUTH_SERVICE_BASE_URL = "/auth-service/v1/api/auth";
+    public static final String AUTH_SERVICE_BASE_URL = "/v1/api/auth";
 
     /**
      * Base URL for the User Service.
      * Example: /user-service/v1/api/users
      */
-    public static final String USER_SERVICE_BASE_URL = "/user-service/v1/api/users";
+    public static final String USER_SERVICE_BASE_URL = "/v1/api/users";
 
     // =======================
     // API Versions
