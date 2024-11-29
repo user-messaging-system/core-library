@@ -24,6 +24,7 @@ public final class ValidationConstant {
 
     public static final String INVALID_EMAIL = "Invalid email";
     public static final String EMAIL_NOT_BLANK = "Email cannot be blank";
+    public static final String LAST_NAME_NOT_BLANK = "Last name cannot be blank";
     public static final String INVALID_NAME = "Invalid name";
     public static final String INVALID_LAST_NAME = "Invalid last name";
     public static final String INVALID_PASSWORD = "Invalid password";
