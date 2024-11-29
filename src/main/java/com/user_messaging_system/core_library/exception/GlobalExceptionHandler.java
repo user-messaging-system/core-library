@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.List;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler extends RuntimeException{
 
@@ -21,7 +23,7 @@ public class GlobalExceptionHandler extends RuntimeException{
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
             .body(new ErrorResponse.Builder()
                 .message(exception.getMessage())
-                .error(exception.getCause().getMessage())
+                .errors(List.of(exception.getCause().getMessage()))
                 .status(HttpStatus.BAD_REQUEST.value())
                 .path(request.getDescription(false))
                 .build()
@@ -36,7 +38,7 @@ public class GlobalExceptionHandler extends RuntimeException{
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
             .body(new ErrorResponse.Builder()
                 .message(exception.getMessage())
-                .error(exception.getCause().getMessage())
+                .errors(List.of(exception.getCause().getMessage()))
                 .status(HttpStatus.NOT_FOUND.value())
                 .path(request.getDescription(false))
                 .build()
@@ -51,7 +53,7 @@ public class GlobalExceptionHandler extends RuntimeException{
         return ResponseEntity.status(HttpStatus.CONFLICT)
             .body(new ErrorResponse.Builder()
                 .message(exception.getMessage())
-                .error(exception.getCause().getMessage())
+                .errors(List.of(exception.getCause().getMessage()))
                 .status(HttpStatus.CONFLICT.value())
                 .path(request.getDescription(false))
                 .build()
@@ -63,7 +65,7 @@ public class GlobalExceptionHandler extends RuntimeException{
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
             .body(new ErrorResponse.Builder()
                     .message(exception.getMessage())
-                    .error(exception.getCause() != null ? exception.getCause().getMessage() : null)
+                    .errors(List.of(exception.getCause() != null ? exception.getCause().getMessage() : "No cause"))
                     .status(HttpStatus.UNAUTHORIZED.value())
                     .path(request.getDescription(false))
                     .build());

@@ -5,10 +5,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 public class ErrorResponse {
     private final String message;
-    private final String error;
+    private final List<String> errors;
     private final int status;
     private final String path;
     private final String timestamp;
@@ -16,12 +17,12 @@ public class ErrorResponse {
     @JsonCreator
     public ErrorResponse(
             @JsonProperty("message") String message,
-            @JsonProperty("error") String error,
+            @JsonProperty("errors") List<String> errors,
             @JsonProperty("status") int status,
             @JsonProperty("path") String path,
             @JsonProperty("timestamp") String timestamp) {
         this.message = message;
-        this.error = error;
+        this.errors = errors;
         this.status = status;
         this.path = path;
         this.timestamp = timestamp != null
@@ -33,8 +34,8 @@ public class ErrorResponse {
         return message;
     }
 
-    public String getError() {
-        return error;
+    public List<String> getErrors() {
+        return errors;
     }
 
     public int getStatus() {
@@ -45,24 +46,13 @@ public class ErrorResponse {
         return path;
     }
 
-    @Override
-    public String toString() {
-        return "ErrorResponse{" +
-                "message='" + message + '\'' +
-                ", error='" + error + '\'' +
-                ", status=" + status +
-                ", path='" + path + '\'' +
-                ", timestamp='" + timestamp + '\'' +
-                '}';
-    }
-
     public String getTimestamp() {
         return timestamp;
     }
 
     public static class Builder {
         private String message;
-        private String error;
+        private List<String> errors;
         private int status;
         private String path;
 
@@ -73,8 +63,8 @@ public class ErrorResponse {
             return this;
         }
 
-        public Builder error(String error) {
-            this.error = error;
+        public Builder errors(List<String> errors) {
+            this.errors = errors;
             return this;
         }
 
@@ -95,7 +85,7 @@ public class ErrorResponse {
 
     private ErrorResponse(Builder builder) {
         this.message = builder.message;
-        this.error = builder.error;
+        this.errors = builder.errors;
         this.status = builder.status;
         this.path = builder.path;
         this.timestamp = LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME);
