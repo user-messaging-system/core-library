@@ -92,10 +92,26 @@ public class JWTService {
     }
 
     public String extractToken(String bearerToken) {
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+        if (bearerToken != null && bearerToken.isBlank() && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
         throw new IllegalArgumentException("Invalid Bearer token format");
+    }
+
+    public String extractCookieHeaderToken(String cookieHeader){
+        if (cookieHeader == null || cookieHeader.isEmpty()) {
+            throw new RuntimeException("No cookies present");
+        }
+
+        Optional<String> tokenCookie = Arrays.stream(cookieHeader.split("; "))
+                .filter(cookie -> cookie.startsWith("accessToken="))
+                .findFirst();
+
+        if (tokenCookie.isPresent()) {
+            return tokenCookie.get().substring("accessToken=".length());
+        } else {
+            throw new RuntimeException("Access token not found in cookies");
+        }
     }
 
     private static SecretKey getSigningKey() {
